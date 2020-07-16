@@ -1,4 +1,7 @@
 #include <ros/ros.h>
+#include "data_subscriber/cloud_subscriber.h"
+
+using slam_for_autonomous_vehicle::CloudSubscriber;
 
 int main(int argc, char *argv[]) {
   // google::InitGoogleLogging(argv[0]);
@@ -9,23 +12,16 @@ int main(int argc, char *argv[]) {
   ros::NodeHandle nh;
 
   std::string cloud_topic;
-  nh.param<std::string>("cloud_topic", cloud_topic, "/kitti/velo/pointcloud");
-  std::shared_ptr<ViewerFlow> _viewer_flow_ptr =
-      std::make_shared<ViewerFlow>(nh, cloud_topic);
+  nh.setParam("cloud_topic", "/kitti/velo/pointcloud");
+  nh.setParam("gnss_topic", "/kitti/oxts/gps/fix");
+  // nh.setParam("gnss_topic", "/kitti/velo/pointcloud");
+  nh.setParam("imu_topic", "/kitti/oxts/imu");
 
-  ros::ServiceServer service =
-      nh.advertiseService("save_map", save_map_callback);
+  CloudSubscriber cloud_sub(nh, 100);
 
   ros::Rate rate(100);
   while (ros::ok()) {
     ros::spinOnce();
-
-    _viewer_flow_ptr->Run();
-    if (_need_save_map) {
-      _need_save_map = false;
-      _viewer_flow_ptr->SaveMap();
-    }
-
     rate.sleep();
   }
 

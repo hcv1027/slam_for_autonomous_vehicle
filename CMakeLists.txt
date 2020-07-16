@@ -8,12 +8,13 @@ add_definitions(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  geometry_msgs
   roscpp
   rospy
+  geometry_msgs
   sensor_msgs
   std_msgs
-  styx_msgs
+  pcl_ros
+  tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -106,9 +107,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
 #  LIBRARIES waypoint_updater
-#  CATKIN_DEPENDS geometry_msgs roscpp rospy sensor_msgs std_msgs styx_msgs styx_utils
+ CATKIN_DEPENDS roscpp rospy geometry_msgs sensor_msgs std_msgs pcl_ros tf
 #  DEPENDS system_lib
 )
 
@@ -118,8 +119,8 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -137,6 +138,9 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/waypoint_updater_node.cpp)
+add_executable(slam_node src/slam_node.cpp src/data_subscriber/cloud_subscriber.cpp)
+target_link_libraries(slam_node ${catkin_LIBRARIES})
+# add_dependencies(slam_node styx_msgs_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
