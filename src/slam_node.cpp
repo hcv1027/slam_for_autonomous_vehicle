@@ -1,7 +1,9 @@
 #include <ros/ros.h>
 #include "data_subscriber/cloud_subscriber.h"
+#include "data_subscriber/gnss_subscriber.h"
 
 using slam_for_autonomous_vehicle::CloudSubscriber;
+using slam_for_autonomous_vehicle::GnssSubscriber;
 
 int main(int argc, char *argv[]) {
   // google::InitGoogleLogging(argv[0]);
@@ -18,6 +20,7 @@ int main(int argc, char *argv[]) {
   nh.setParam("imu_topic", "/kitti/oxts/imu");
 
   CloudSubscriber cloud_sub(nh, 100);
+  GnssSubscriber gnss_sub(nh, 100);
 
   ros::Rate rate(100);
   while (ros::ok()) {

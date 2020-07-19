@@ -113,6 +113,8 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
+message(PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR})
+
 ###########
 ## Build ##
 ###########
@@ -128,6 +130,8 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/waypoint_updater.cpp
 # )
+add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/GeographicLib)
+include_directories(${PROJECT_SOURCE_DIR}/third_party/GeographicLib/include/)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -138,8 +142,13 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/waypoint_updater_node.cpp)
-add_executable(slam_node src/slam_node.cpp src/data_subscriber/cloud_subscriber.cpp)
-target_link_libraries(slam_node ${catkin_LIBRARIES})
+add_executable(slam_node 
+  src/slam_node.cpp 
+  src/data_subscriber/cloud_subscriber.cpp
+  src/data_subscriber/gnss_subscriber.cpp
+  src/sensor_data/gnss.cpp
+)
+target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc)
 # add_dependencies(slam_node styx_msgs_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
