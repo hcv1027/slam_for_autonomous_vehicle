@@ -4,9 +4,11 @@
 #include <Eigen/Dense>
 #include "data_subscriber/cloud_subscriber.h"
 #include "data_subscriber/gnss_subscriber.h"
+#include "data_subscriber/imu_subscriber.h"
 
 using slam_for_autonomous_vehicle::CloudSubscriber;
 using slam_for_autonomous_vehicle::GnssSubscriber;
+using slam_for_autonomous_vehicle::ImuSubscriber;
 using std::string;
 // using Eigen;
 
@@ -29,10 +31,6 @@ bool TransformToMatrix(const tf::StampedTransform& transform,
 }
 
 int main(int argc, char* argv[]) {
-  // google::InitGoogleLogging(argv[0]);
-  // FLAGS_log_dir = WORK_SPACE_PATH + "/Log";
-  // FLAGS_alsologtostderr = 1;
-
   ros::init(argc, argv, "slam_node");
   ros::NodeHandle nh;
 
@@ -48,32 +46,33 @@ int main(int argc, char* argv[]) {
   Eigen::Matrix4f transform_matrix = Eigen::Matrix4f::Identity();
   try {
     tf::StampedTransform transform;
-    listener.waitForTransform(lidar_frame, imu_frame, ros::Time(0),
+    listener.waitForTransform(imu_frame, lidar_frame, ros::Time(0),
                               ros::Duration(1.0));
-    listener.lookupTransform(lidar_frame, imu_frame, ros::Time(0), transform);
+    listener.lookupTransform(imu_frame, lidar_frame, ros::Time(0), transform);
     TransformToMatrix(transform, transform_matrix);
     ROS_INFO_STREAM("transform_matrix:\n" << transform_matrix);
   } catch (tf::TransformException& ex) {
     // ROS_INFO_STREAM("No transform: " << ex);
   }
 
-  Eigen::Matrix3f m1;
-  m1 << 1, 2, 3, 4, 5, 6, 7, 8, 9;
-  Eigen::Matrix3f m2;
-  m2 << 1, 1, 1, 2, 2, 2, 3, 3, 3;
-  ROS_INFO_STREAM("m1:\n" << m1);
-  ROS_INFO_STREAM("m2:\n" << m2);
-  m1 *= m2;
-  ROS_INFO_STREAM("m1 *= m2:\n" << m1);
+  // Eigen::Matrix3f m1;
+  // m1 << 1, 2, 3, 4, 5, 6, 7, 8, 9;
+  // Eigen::Matrix3f m2;
+  // m2 << 1, 1, 1, 2, 2, 2, 3, 3, 3;
+  // ROS_INFO_STREAM("m1:\n" << m1);
+  // ROS_INFO_STREAM("m2:\n" << m2);
+  // m1 *= m2;
+  // ROS_INFO_STREAM("m1 *= m2:\n" << m1);
 
-  // CloudSubscriber cloud_sub(nh, 100);
-  // GnssSubscriber gnss_sub(nh, 100);
+  CloudSubscriber cloud_sub(nh, 100);
+  GnssSubscriber gnss_sub(nh, 100);
+  ImuSubscriber imu_sub(nh, 100);
 
-  /* ros::Rate rate(100);
+  ros::Rate rate(100);
   while (ros::ok()) {
     ros::spinOnce();
     rate.sleep();
-  } */
+  }
 
   return 0;
 }

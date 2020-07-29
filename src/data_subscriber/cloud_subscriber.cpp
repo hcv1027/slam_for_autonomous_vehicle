@@ -17,6 +17,6 @@ CloudSubscriber::CloudSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
 void CloudSubscriber::msg_callback(const sensor_msgs::PointCloud2& msg) {
   Cloud cloud(msg);
   data_.push_back(cloud);
-  ROS_INFO_STREAM("Receive cloud msg");
+  // ROS_INFO_STREAM("Receive cloud msg");
 }
 }

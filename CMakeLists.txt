@@ -146,6 +146,7 @@ add_executable(slam_node
   src/slam_node.cpp 
   src/data_subscriber/cloud_subscriber.cpp
   src/data_subscriber/gnss_subscriber.cpp
+  src/data_subscriber/imu_subscriber.cpp
   src/sensor_data/gnss.cpp
 )
 target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc)

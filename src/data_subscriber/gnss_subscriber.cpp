@@ -16,6 +16,6 @@ GnssSubscriber::GnssSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
 void GnssSubscriber::msg_callback(const sensor_msgs::NavSatFix& msg) {
   Gnss gnss(msg);
   data_.push_back(gnss);
-  ROS_INFO_STREAM("Receive gnss msg");
+  // ROS_INFO_STREAM("Receive gnss msg");
 }
 }
