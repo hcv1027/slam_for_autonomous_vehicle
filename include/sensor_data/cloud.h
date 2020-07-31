@@ -12,26 +12,26 @@ namespace slam_for_autonomous_vehicle {
 struct Cloud {
   using POINT = pcl::PointXYZ;
   using CLOUD = pcl::PointCloud<POINT>;
-  using CLOUD_PTR = CLOUD::Ptr;
+  using CLOUD_PTR = CLOUD::Ptr; // boost::shared_ptr
 
-  double time_stamp_;
-  CLOUD data_;
+  double time_stamp;
+  CLOUD_PTR cloud_ptr;
 
-  Cloud() = default;
+  Cloud() : cloud_ptr(new CLOUD), time_stamp(0.0) {}
 
-  Cloud(const sensor_msgs::PointCloud2& data) {
-    time_stamp_ = data.header.stamp.toSec();
-    pcl::fromROSMsg(data, this->data_);
+  Cloud(const sensor_msgs::PointCloud2 &msg) : cloud_ptr(new CLOUD) {
+    time_stamp = msg.header.stamp.toSec();
+    pcl::fromROSMsg(msg, *this->cloud_ptr);
   }
 
-  Cloud(const Cloud& cloud) {
-    data_ = cloud.data_;
-    time_stamp_ = cloud.time_stamp_;
+  Cloud(const Cloud &cloud) {
+    cloud_ptr = cloud.cloud_ptr;
+    time_stamp = cloud.time_stamp;
   }
 
   ~Cloud() = default;
 };
 
-}  // namespace slam_for_autonomous_vehicle
+} // namespace slam_for_autonomous_vehicle
 
-#endif  // SLAM_FOR_AUTONOMOUS_VEHICLE_SENSOR_DATA_CLOUD_H_
+#endif // SLAM_FOR_AUTONOMOUS_VEHICLE_SENSOR_DATA_CLOUD_H_
