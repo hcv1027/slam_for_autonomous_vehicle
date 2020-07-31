@@ -5,7 +5,7 @@ using std::string;
 // using slam_for_autonomous_vehicle::Imu;
 
 namespace slam_for_autonomous_vehicle {
-ImuSubscriber::ImuSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
+ImuSubscriber::ImuSubscriber(ros::NodeHandle &nh, size_t buffer_size) {
   nh_ = nh;
   string topic_name = nh_.param(string("imu_topic"), string("imu_topic_name"));
   ROS_INFO_STREAM("imu_topic: " << topic_name);
@@ -13,7 +13,14 @@ ImuSubscriber::ImuSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
                               &ImuSubscriber::msg_callback, this);
 }
 
-void ImuSubscriber::msg_callback(const sensor_msgs::Imu& msg) {
+void ImuSubscriber::get_data(std::deque<Imu> &data_deque) {
+  if (data_.size() > 0) {
+    data_deque.insert(data_deque.end(), data_.begin(), data_.end());
+    data_.clear();
+  }
+}
+
+void ImuSubscriber::msg_callback(const sensor_msgs::Imu &msg) {
   Imu imu(msg);
   data_.push_back(imu);
   //   ROS_INFO_STREAM("Receive imu msg");

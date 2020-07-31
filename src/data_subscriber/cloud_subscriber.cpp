@@ -5,7 +5,7 @@ using std::string;
 // using slam_for_autonomous_vehicle::Cloud;
 
 namespace slam_for_autonomous_vehicle {
-CloudSubscriber::CloudSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
+CloudSubscriber::CloudSubscriber(ros::NodeHandle &nh, size_t buffer_size) {
   nh_ = nh;
   string topic_name =
       nh_.param(string("cloud_topic"), string("cloud_topic_name"));
@@ -14,7 +14,14 @@ CloudSubscriber::CloudSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
                               &CloudSubscriber::msg_callback, this);
 }
 
-void CloudSubscriber::msg_callback(const sensor_msgs::PointCloud2& msg) {
+void CloudSubscriber::get_data(std::deque<Cloud> &data_deque) {
+  if (data_.size() > 0) {
+    data_deque.insert(data_deque.end(), data_.begin(), data_.end());
+    data_.clear();
+  }
+}
+
+void CloudSubscriber::msg_callback(const sensor_msgs::PointCloud2 &msg) {
   Cloud cloud(msg);
   data_.push_back(cloud);
   // ROS_INFO_STREAM("Receive cloud msg");

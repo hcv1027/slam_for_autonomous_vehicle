@@ -4,7 +4,7 @@
 using std::string;
 
 namespace slam_for_autonomous_vehicle {
-GnssSubscriber::GnssSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
+GnssSubscriber::GnssSubscriber(ros::NodeHandle &nh, size_t buffer_size) {
   nh_ = nh;
   string topic_name =
       nh_.param(string("gnss_topic"), string("gnss_topic_name"));
@@ -13,7 +13,14 @@ GnssSubscriber::GnssSubscriber(ros::NodeHandle& nh, size_t buffer_size) {
                               &GnssSubscriber::msg_callback, this);
 }
 
-void GnssSubscriber::msg_callback(const sensor_msgs::NavSatFix& msg) {
+void GnssSubscriber::get_data(std::deque<Gnss> &data_deque) {
+  if (data_.size() > 0) {
+    data_deque.insert(data_deque.end(), data_.begin(), data_.end());
+    data_.clear();
+  }
+}
+
+void GnssSubscriber::msg_callback(const sensor_msgs::NavSatFix &msg) {
   Gnss gnss(msg);
   data_.push_back(gnss);
   // ROS_INFO_STREAM("Receive gnss msg");
