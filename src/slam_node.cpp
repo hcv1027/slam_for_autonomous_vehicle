@@ -1,19 +1,23 @@
-#include <ros/console.h>
-#include <ros/ros.h>
-#include <tf/transform_listener.h>
-#include <Eigen/Dense>
 #include "data_subscriber/cloud_subscriber.h"
 #include "data_subscriber/gnss_subscriber.h"
 #include "data_subscriber/imu_subscriber.h"
+#include <Eigen/Dense>
+#include <deque>
+#include <ros/console.h>
+#include <ros/ros.h>
+#include <tf/transform_listener.h>
 
 using slam_for_autonomous_vehicle::CloudSubscriber;
 using slam_for_autonomous_vehicle::GnssSubscriber;
 using slam_for_autonomous_vehicle::ImuSubscriber;
+using slam_for_autonomous_vehicle::Imu;
+using slam_for_autonomous_vehicle::Gnss;
+using slam_for_autonomous_vehicle::Cloud;
 using std::string;
-// using Eigen;
+using std::deque;
 
-bool TransformToMatrix(const tf::StampedTransform& transform,
-                       Eigen::Matrix4f& transform_matrix) {
+bool TransformToMatrix(const tf::StampedTransform &transform,
+                       Eigen::Matrix4f &transform_matrix) {
   Eigen::Translation3f tl_btol(transform.getOrigin().getX(),
                                transform.getOrigin().getY(),
                                transform.getOrigin().getZ());
@@ -30,7 +34,7 @@ bool TransformToMatrix(const tf::StampedTransform& transform,
   return true;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   ros::init(argc, argv, "slam_node");
   ros::NodeHandle nh;
 
@@ -45,31 +49,35 @@ int main(int argc, char* argv[]) {
   tf::TransformListener listener;
   Eigen::Matrix4f transform_matrix = Eigen::Matrix4f::Identity();
   try {
-    tf::StampedTransform transform;
+    tf::StampedTransform imu_to_lidar;
     listener.waitForTransform(imu_frame, lidar_frame, ros::Time(0),
                               ros::Duration(1.0));
-    listener.lookupTransform(imu_frame, lidar_frame, ros::Time(0), transform);
-    TransformToMatrix(transform, transform_matrix);
+    listener.lookupTransform(imu_frame, lidar_frame, ros::Time(0),
+                             imu_to_lidar);
+    TransformToMatrix(imu_to_lidar, transform_matrix);
     ROS_INFO_STREAM("transform_matrix:\n" << transform_matrix);
-  } catch (tf::TransformException& ex) {
+  } catch (tf::TransformException &ex) {
     // ROS_INFO_STREAM("No transform: " << ex);
   }
-
-  // Eigen::Matrix3f m1;
-  // m1 << 1, 2, 3, 4, 5, 6, 7, 8, 9;
-  // Eigen::Matrix3f m2;
-  // m2 << 1, 1, 1, 2, 2, 2, 3, 3, 3;
-  // ROS_INFO_STREAM("m1:\n" << m1);
-  // ROS_INFO_STREAM("m2:\n" << m2);
-  // m1 *= m2;
-  // ROS_INFO_STREAM("m1 *= m2:\n" << m1);
 
   CloudSubscriber cloud_sub(nh, 100);
   GnssSubscriber gnss_sub(nh, 100);
   ImuSubscriber imu_sub(nh, 100);
+  deque<Cloud> cloud_data;
+  deque<Imu> imu_data;
+  deque<Gnss> gnss_data;
+  bool init_odometry = true;
 
   ros::Rate rate(100);
   while (ros::ok()) {
+    cloud_sub.get_data(cloud_data);
+    imu_sub.get_data(imu_data);
+    gnss_sub.get_data(gnss_data);
+
+    if (init_odometry) {
+      init_odometry = false;
+    }
+    // Cloud cloud =
     ros::spinOnce();
     rate.sleep();
   }

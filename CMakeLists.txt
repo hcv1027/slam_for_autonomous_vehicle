@@ -148,6 +148,7 @@ add_executable(slam_node
   src/data_subscriber/gnss_subscriber.cpp
   src/data_subscriber/imu_subscriber.cpp
   src/sensor_data/gnss.cpp
+  src/front_end.cpp
 )
 target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc)
 # add_dependencies(slam_node styx_msgs_generate_messages_cpp)
