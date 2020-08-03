@@ -29,13 +29,14 @@ class FrontEnd {
   void SetInitPose(const Eigen::Matrix4f &init_pose);
 
  private:
-  Eigen::Matrix4f AddKeyFrame(const Cloud &cloud);
+  void AddKeyFrame(Frame &keyframe);
 
  private:
   ros::NodeHandle nh_;
   pcl::VoxelGrid<pcl::PointXYZ> cloud_filter_;
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_;
 
+  Eigen::Matrix4f curr_pose_;
   Eigen::Matrix4f last_pose_;
   Eigen::Matrix4f predict_pose_;
 
