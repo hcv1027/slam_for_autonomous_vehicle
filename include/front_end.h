@@ -1,11 +1,11 @@
 #ifndef SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_
 #define SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_
 
-#include "sensor_data/cloud.h"
-#include <Eigen/Dense>
-#include <deque>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/ndt.h>
+#include <Eigen/Dense>
+#include <deque>
+#include "sensor_data/cloud.h"
 // #include <pcl/point_cloud.h>
 // #include <pcl/point_types.h>
 // #include <ros/ros.h>
@@ -19,23 +19,32 @@ class FrontEnd {
     Cloud cloud;
   };
 
-public:
+ public:
   FrontEnd(ros::NodeHandle &nh);
   FrontEnd() = default;
   ~FrontEnd() = default;
 
-  void Update(const Cloud &cloud);
-  void AddKeyFrame();
+  Eigen::Matrix4f Update(const Cloud &cloud);
 
-private:
-private:
+  void SetInitPose(const Eigen::Matrix4f &init_pose);
+
+ private:
+  Eigen::Matrix4f AddKeyFrame(const Cloud &cloud);
+
+ private:
   ros::NodeHandle nh_;
   pcl::VoxelGrid<pcl::PointXYZ> cloud_filter_;
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_;
-  std::deque<Frame> local_map_;
-  std::deque<Frame> global_map_;
+
+  Eigen::Matrix4f last_pose_;
+  Eigen::Matrix4f predict_pose_;
+
+  std::deque<Frame> local_keyframe_;
+  Cloud local_map_;
+  std::deque<Frame> global_keyframe_;
+  Cloud global_map_;
 };
 
-} // namespace slam_for_autonomous_vehicle
+}  // namespace slam_for_autonomous_vehicle
 
-#endif // SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_
+#endif  // SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_

@@ -12,7 +12,7 @@ namespace slam_for_autonomous_vehicle {
 struct Cloud {
   using POINT = pcl::PointXYZ;
   using CLOUD = pcl::PointCloud<POINT>;
-  using CLOUD_PTR = CLOUD::Ptr; // boost::shared_ptr
+  using CLOUD_PTR = CLOUD::Ptr;  // boost::shared_ptr
 
   double time_stamp;
   CLOUD_PTR cloud_ptr;
@@ -30,8 +30,10 @@ struct Cloud {
   }
 
   ~Cloud() = default;
+
+  void reset() { cloud_ptr = CLOUD_PTR(new CLOUD); }
 };
 
-} // namespace slam_for_autonomous_vehicle
+}  // namespace slam_for_autonomous_vehicle
 
-#endif // SLAM_FOR_AUTONOMOUS_VEHICLE_SENSOR_DATA_CLOUD_H_
+#endif  // SLAM_FOR_AUTONOMOUS_VEHICLE_SENSOR_DATA_CLOUD_H_
