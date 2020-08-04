@@ -1,11 +1,11 @@
+#include <ros/console.h>
+#include <ros/ros.h>
+#include <Eigen/Dense>
+#include <deque>
 #include "data_subscriber/cloud_subscriber.h"
 #include "data_subscriber/gnss_subscriber.h"
 #include "data_subscriber/imu_subscriber.h"
-#include <Eigen/Dense>
-#include <deque>
-#include <ros/console.h>
-#include <ros/ros.h>
-#include <tf/transform_listener.h>
+#include "tf_listener.h"
 
 using slam_for_autonomous_vehicle::CloudSubscriber;
 using slam_for_autonomous_vehicle::GnssSubscriber;
@@ -13,26 +13,9 @@ using slam_for_autonomous_vehicle::ImuSubscriber;
 using slam_for_autonomous_vehicle::Imu;
 using slam_for_autonomous_vehicle::Gnss;
 using slam_for_autonomous_vehicle::Cloud;
+using slam_for_autonomous_vehicle::TfListener;
 using std::string;
 using std::deque;
-
-bool TransformToMatrix(const tf::StampedTransform &transform,
-                       Eigen::Matrix4f &transform_matrix) {
-  Eigen::Translation3f tl_btol(transform.getOrigin().getX(),
-                               transform.getOrigin().getY(),
-                               transform.getOrigin().getZ());
-
-  double roll, pitch, yaw;
-  tf::Matrix3x3(transform.getRotation()).getEulerYPR(yaw, pitch, roll);
-  Eigen::AngleAxisf rot_x_btol(roll, Eigen::Vector3f::UnitX());
-  Eigen::AngleAxisf rot_y_btol(pitch, Eigen::Vector3f::UnitY());
-  Eigen::AngleAxisf rot_z_btol(yaw, Eigen::Vector3f::UnitZ());
-
-  // 此矩阵为 child_frame_id 到 base_frame_id 的转换矩阵
-  transform_matrix = (tl_btol * rot_z_btol * rot_y_btol * rot_x_btol).matrix();
-
-  return true;
-}
 
 int main(int argc, char *argv[]) {
   ros::init(argc, argv, "slam_node");
@@ -46,18 +29,19 @@ int main(int argc, char *argv[]) {
 
   string lidar_frame = "velo_link";
   string imu_frame = "imu_link";
-  tf::TransformListener listener;
-  Eigen::Matrix4f transform_matrix = Eigen::Matrix4f::Identity();
-  try {
-    tf::StampedTransform imu_to_lidar;
-    listener.waitForTransform(imu_frame, lidar_frame, ros::Time(0),
-                              ros::Duration(1.0));
-    listener.lookupTransform(imu_frame, lidar_frame, ros::Time(0),
-                             imu_to_lidar);
-    TransformToMatrix(imu_to_lidar, transform_matrix);
-    ROS_INFO_STREAM("transform_matrix:\n" << transform_matrix);
-  } catch (tf::TransformException &ex) {
-    // ROS_INFO_STREAM("No transform: " << ex);
+  TfListener tf_listener;
+  Eigen::Matrix4f lidar_to_imu = Eigen::Matrix4f::Identity();
+  int try_count = 0;
+  bool transform_result = false;
+  do {
+    try_count++;
+    transform_result =
+        tf_listener.GetTransformMatrix(imu_frame, lidar_frame, lidar_to_imu);
+  } while (!transform_result && try_count < 10);
+  if (!transform_result) {
+    ROS_ERROR_STREAM("Fail to get transform from " << lidar_frame << " to "
+                                                   << imu_frame);
+    exit(0);
   }
 
   CloudSubscriber cloud_sub(nh, 100);
@@ -73,6 +57,12 @@ int main(int argc, char *argv[]) {
     cloud_sub.get_data(cloud_data);
     imu_sub.get_data(imu_data);
     gnss_sub.get_data(gnss_data);
+    if (cloud_data.size()) {
+    }
+
+    Cloud &cloud = cloud_data.front();
+    Imu &imu = imu_data.front();
+    Gnss &gnss = gnss_data.front();
 
     if (init_odometry) {
       init_odometry = false;
