@@ -6,10 +6,6 @@
 #include <Eigen/Dense>
 #include <deque>
 #include "sensor_data/cloud.h"
-// #include <pcl/point_cloud.h>
-// #include <pcl/point_types.h>
-// #include <ros/ros.h>
-// #include <sensor_msgs/PointCloud2.h>
 
 namespace slam_for_autonomous_vehicle {
 
@@ -36,6 +32,7 @@ class FrontEnd {
   pcl::VoxelGrid<pcl::PointXYZ> cloud_filter_;
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_;
 
+  Eigen::Matrix4f init_pose_;
   Eigen::Matrix4f curr_pose_;
   Eigen::Matrix4f last_pose_;
   Eigen::Matrix4f predict_pose_;

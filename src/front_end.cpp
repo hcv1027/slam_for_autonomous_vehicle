@@ -93,4 +93,11 @@ void FrontEnd::AddKeyFrame(Frame &keyframe) {
 
   // Update global keyfram and global map
 }
+
+void FrontEnd::SetInitPose(const Eigen::Matrix4f &init_pose) {
+  init_pose_ = init_pose;
+  curr_pose_ = init_pose;
+  last_pose_ = init_pose;
+  predict_pose_ = init_pose;
+}
 }
