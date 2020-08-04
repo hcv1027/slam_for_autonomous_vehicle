@@ -5,6 +5,7 @@
 #include "data_subscriber/cloud_subscriber.h"
 #include "data_subscriber/gnss_subscriber.h"
 #include "data_subscriber/imu_subscriber.h"
+#include "front_end.h"
 #include "tf_listener.h"
 
 using slam_for_autonomous_vehicle::CloudSubscriber;
@@ -14,6 +15,7 @@ using slam_for_autonomous_vehicle::Imu;
 using slam_for_autonomous_vehicle::Gnss;
 using slam_for_autonomous_vehicle::Cloud;
 using slam_for_autonomous_vehicle::TfListener;
+using slam_for_autonomous_vehicle::FrontEnd;
 using std::string;
 using std::deque;
 
@@ -47,27 +49,55 @@ int main(int argc, char *argv[]) {
   CloudSubscriber cloud_sub(nh, 100);
   GnssSubscriber gnss_sub(nh, 100);
   ImuSubscriber imu_sub(nh, 100);
-  deque<Cloud> cloud_data;
-  deque<Imu> imu_data;
-  deque<Gnss> gnss_data;
+  deque<Cloud> cloud_data_buff;
+  deque<Imu> imu_data_buff;
+  deque<Gnss> gnss_data_buff;
   bool init_odometry = true;
+  bool init_gnss = true;
+  FrontEnd front_end(nh);
 
   ros::Rate rate(100);
   while (ros::ok()) {
-    cloud_sub.get_data(cloud_data);
-    imu_sub.get_data(imu_data);
-    gnss_sub.get_data(gnss_data);
-    if (cloud_data.size()) {
+    cloud_sub.get_data(cloud_data_buff);
+    imu_sub.get_data(imu_data_buff);
+    gnss_sub.get_data(gnss_data_buff);
+    if (cloud_data_buff.size() > 0 && imu_data_buff.size() > 0 &&
+        gnss_data_buff.size() > 0) {
+      Cloud &cloud = cloud_data_buff.front();
+      Imu &imu = imu_data_buff.front();
+      Gnss &gnss = gnss_data_buff.front();
+      double dt = cloud.time_stamp - imu.time_stamp;
+      if (dt < -0.05) {
+        cloud_data_buff.pop_front();
+      } else if (dt > 0.05) {
+        imu_data_buff.pop_front();
+        gnss_data_buff.pop_front();
+      } else {
+        // Initialize GeographicLib::LocalCartesian
+        if (!init_gnss) {
+          init_gnss = false;
+          gnss.InitOrigin();
+        }
+        gnss.UpdateXYZ();
+
+        Eigen::Matrix4f odometry = Eigen::Matrix4f::Identity();
+        odometry(0, 3) = gnss.local_E;
+        odometry(1, 3) = gnss.local_N;
+        odometry(2, 3) = gnss.local_U;
+        odometry.block<3, 3>(0, 0) = imu.GetOrientationMatrix();
+        odometry *= lidar_to_imu;
+        if (init_odometry) {
+          init_odometry = false;
+          front_end.SetInitPose(odometry);
+        }
+        front_end.Update(cloud);
+
+        cloud_data_buff.pop_front();
+        imu_data_buff.pop_front();
+        gnss_data_buff.pop_front();
+      }
     }
 
-    Cloud &cloud = cloud_data.front();
-    Imu &imu = imu_data.front();
-    Gnss &gnss = gnss_data.front();
-
-    if (init_odometry) {
-      init_odometry = false;
-    }
-    // Cloud cloud =
     ros::spinOnce();
     rate.sleep();
   }
