@@ -3,6 +3,7 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
+#include <Eigen/Dense>
 
 namespace slam_for_autonomous_vehicle {
 
@@ -56,6 +57,13 @@ struct Imu {
   }
 
   ~Imu() = default;
+
+  Eigen::Matrix3f GetOrientationMatrix() {
+    Eigen::Quaterniond q(orientation.w, orientation.x, orientation.y,
+                         orientation.z);
+    Eigen::Matrix3f matrix = q.matrix().cast<float>();
+    return matrix;
+  }
 };
 
 }  // namespace slam_for_autonomous_vehicle
