@@ -3,8 +3,6 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
-// #include <Eigen/Dense>
-// #include <array>
 
 namespace slam_for_autonomous_vehicle {
 
@@ -28,14 +26,16 @@ struct Imu {
     double z = 0.0;
   };
 
+  double time_stamp = 0.0;
   Orientation orientation;
   AngularVel angular_vel;
   LinearAcc linear_acc;
 
- private:
  public:
   Imu() = default;
+
   Imu(const sensor_msgs::Imu& data) {
+    time_stamp = data.header.stamp.toSec();
     orientation.w = data.orientation.w;
     orientation.x = data.orientation.x;
     orientation.y = data.orientation.y;
@@ -49,10 +49,12 @@ struct Imu {
   }
 
   Imu(const Imu& imu) {
+    time_stamp = imu.time_stamp;
     orientation = imu.orientation;
     angular_vel = imu.angular_vel;
     linear_acc = imu.linear_acc;
   }
+
   ~Imu() = default;
 };
 
