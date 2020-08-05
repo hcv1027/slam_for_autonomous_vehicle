@@ -1,3 +1,4 @@
+#include <nav_msgs/Odometry.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <Eigen/Dense>
@@ -6,6 +7,7 @@
 #include "data_subscriber/gnss_subscriber.h"
 #include "data_subscriber/imu_subscriber.h"
 #include "front_end.h"
+#include "publisher/odometry_publisher.h"
 #include "tf_listener.h"
 
 using slam_for_autonomous_vehicle::CloudSubscriber;
@@ -16,6 +18,7 @@ using slam_for_autonomous_vehicle::Gnss;
 using slam_for_autonomous_vehicle::Cloud;
 using slam_for_autonomous_vehicle::TfListener;
 using slam_for_autonomous_vehicle::FrontEnd;
+using slam_for_autonomous_vehicle::OdometryPublisher;
 using std::string;
 using std::deque;
 
@@ -29,6 +32,7 @@ int main(int argc, char *argv[]) {
   // nh.setParam("gnss_topic", "/kitti/velo/pointcloud");
   nh.setParam("imu_topic", "/kitti/oxts/imu");
 
+  string map_frame = "map";
   string lidar_frame = "velo_link";
   string imu_frame = "imu_link";
   TfListener tf_listener;
@@ -46,6 +50,7 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
+  OdometryPublisher odom_pub(nh, "lidar_odom", map_frame, lidar_frame);
   CloudSubscriber cloud_sub(nh, 100);
   GnssSubscriber gnss_sub(nh, 100);
   ImuSubscriber imu_sub(nh, 100);
@@ -90,7 +95,10 @@ int main(int argc, char *argv[]) {
           init_odometry = false;
           front_end.SetInitPose(odometry);
         }
-        front_end.Update(cloud);
+        FrontEnd::Frame curr_frame = front_end.Update(cloud);
+
+        // Publish result
+        odom_pub.publish(curr_frame.pose);
 
         cloud_data_buff.pop_front();
         imu_data_buff.pop_front();

@@ -11,7 +11,7 @@ FrontEnd::FrontEnd(ros::NodeHandle &nh) : nh_(nh) {
   float leaf_size = nh_.param(string("leaf_size"), 0.2);
   cloud_filter_.setLeafSize(leaf_size, leaf_size, leaf_size);  // Unit: meter
 
-  curr_pose_ = Eigen::Matrix4f::Identity();
+  // curr_pose_ = Eigen::Matrix4f::Identity();
   last_pose_ = Eigen::Matrix4f::Identity();
   predict_pose_ = Eigen::Matrix4f::Identity();
 
@@ -27,7 +27,7 @@ FrontEnd::FrontEnd(ros::NodeHandle &nh) : nh_(nh) {
   ndt_.setMaximumIterations(35);
 }
 
-Eigen::Matrix4f FrontEnd::Update(const Cloud &cloud) {
+FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
   std::vector<int> indices;
   Cloud no_nan_cloud;
   Cloud filteded_cloud;
@@ -38,37 +38,39 @@ Eigen::Matrix4f FrontEnd::Update(const Cloud &cloud) {
 
   // Add first key frame
   if (local_keyframe_.size() == 0) {
-    Frame keyframe;
+    /* Frame keyframe;
     keyframe.cloud = cloud;
-    keyframe.pose = Eigen::Matrix4f::Identity();
-    AddKeyFrame(keyframe);
-    return keyframe.pose;
+    keyframe.pose = Eigen::Matrix4f::Identity(); */
+    curr_frame_.cloud = cloud;
+    curr_frame_.pose = Eigen::Matrix4f::Identity();
+    AddKeyFrame(curr_frame_);
+    return curr_frame_;
   }
 
   // Setting point cloud to be aligned.
   Cloud output_cloud;
   ndt_.setInputSource(filteded_cloud.cloud_ptr);
   ndt_.align(*output_cloud.cloud_ptr, predict_pose_);
-  curr_pose_ = ndt_.getFinalTransformation();
+  curr_frame_.pose = ndt_.getFinalTransformation();
 
   // Prdtict next pose formula: next_pose = curr_pose * step_pose
-  Eigen::Matrix4f step_pose = last_pose_.inverse() * curr_pose_;
-  predict_pose_ = curr_pose_ * step_pose;
-  last_pose_ = curr_pose_;
+  Eigen::Matrix4f step_pose = last_pose_.inverse() * curr_frame_.pose;
+  predict_pose_ = curr_frame_.pose * step_pose;
+  last_pose_ = curr_frame_.pose;
 
   // Add new keyframe
   Frame &last_keyframe = local_keyframe_.back();
-  double dist = pow(curr_pose_(0, 3) - last_keyframe.pose(0, 3), 2) +
-                pow(curr_pose_(1, 3) - last_keyframe.pose(1, 3), 2) +
-                pow(curr_pose_(2, 3) - last_keyframe.pose(2, 3), 2);
+  double dist = pow(curr_frame_.pose(0, 3) - last_keyframe.pose(0, 3), 2) +
+                pow(curr_frame_.pose(1, 3) - last_keyframe.pose(1, 3), 2) +
+                pow(curr_frame_.pose(2, 3) - last_keyframe.pose(2, 3), 2);
   if (dist > 2.0) {
     Frame keyframe;
     keyframe.cloud = cloud;
-    keyframe.pose = curr_pose_;
+    keyframe.pose = curr_frame_.pose;
     AddKeyFrame(keyframe);
   }
 
-  return curr_pose_;
+  return curr_frame_;
 }
 
 void FrontEnd::AddKeyFrame(Frame &keyframe) {
@@ -96,7 +98,7 @@ void FrontEnd::AddKeyFrame(Frame &keyframe) {
 
 void FrontEnd::SetInitPose(const Eigen::Matrix4f &init_pose) {
   init_pose_ = init_pose;
-  curr_pose_ = init_pose;
+  curr_frame_.pose = init_pose;
   last_pose_ = init_pose;
   predict_pose_ = init_pose;
 }

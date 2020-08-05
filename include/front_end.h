@@ -10,19 +10,20 @@
 namespace slam_for_autonomous_vehicle {
 
 class FrontEnd {
+ public:
   struct Frame {
     Eigen::Matrix4f pose;
     Cloud cloud;
   };
 
- public:
   FrontEnd(ros::NodeHandle &nh);
   FrontEnd() = default;
   ~FrontEnd() = default;
 
-  Eigen::Matrix4f Update(const Cloud &cloud);
+  FrontEnd::Frame Update(const Cloud &cloud);
 
   void SetInitPose(const Eigen::Matrix4f &init_pose);
+  // Eigen::Matrix4f GetCurrFrame() { return curr_pose_; }
 
  private:
   void AddKeyFrame(Frame &keyframe);
@@ -33,9 +34,9 @@ class FrontEnd {
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_;
 
   Eigen::Matrix4f init_pose_;
-  Eigen::Matrix4f curr_pose_;
   Eigen::Matrix4f last_pose_;
   Eigen::Matrix4f predict_pose_;
+  Frame curr_frame_;
 
   std::deque<Frame> local_keyframe_;
   Cloud local_map_;

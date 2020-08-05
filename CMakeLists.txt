@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   sensor_msgs
   std_msgs
+  nav_msgs
   pcl_ros
   tf
 )
@@ -109,7 +110,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES waypoint_updater
- CATKIN_DEPENDS roscpp rospy geometry_msgs sensor_msgs std_msgs pcl_ros tf
+ CATKIN_DEPENDS roscpp rospy geometry_msgs sensor_msgs std_msgs nav_msgs pcl_ros tf
 #  DEPENDS system_lib
 )
 
@@ -150,6 +151,7 @@ add_executable(slam_node
   src/sensor_data/gnss.cpp
   src/front_end.cpp
   src/tf_listener.cpp
+  src/publisher/odometry_publisher.cpp
 )
 target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc)
 # add_dependencies(slam_node styx_msgs_generate_messages_cpp)
