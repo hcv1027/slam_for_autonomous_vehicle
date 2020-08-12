@@ -23,14 +23,6 @@ class OdometryPublisher {
   void publish(const Eigen::Matrix4f &transform);
 };
 
-/* OdometryPublisher::OdometryPublisher()
-{
-}
-
-OdometryPublisher::~OdometryPublisher()
-{
-} */
-
 }  // namespace slam_for_autonomous_vehicle
 
 #endif  // SLAM_FOR_AUTONOMOUS_VEHICLE_PUBLISHER_ODOMETRT_PUBLISHER_H_

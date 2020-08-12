@@ -7,7 +7,7 @@ OdometryPublisher::OdometryPublisher(ros::NodeHandle &nh,
                                      const std::string &base_frame,
                                      const std::string &child_frame) {
   publisher_ = nh.advertise<nav_msgs::Odometry>("topic_name", 1000);
-  nav_msgs::Odometry msg_;
+  // Initialize odometry message header
   msg_.header.seq = 0;
   msg_.header.stamp = ros::Time::now();
   msg_.header.frame_id = base_frame;
@@ -27,5 +27,6 @@ void OdometryPublisher::publish(const Eigen::Matrix4f &transform) {
   msg_.pose.pose.orientation.w = q.w();
 
   publisher_.publish(msg_);
+  msg_.header.seq++;
 }
-}
+}  // namespace slam_for_autonomous_vehicle
