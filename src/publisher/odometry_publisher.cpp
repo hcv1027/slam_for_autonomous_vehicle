@@ -15,6 +15,9 @@ OdometryPublisher::OdometryPublisher(ros::NodeHandle &nh,
 }
 
 void OdometryPublisher::publish(const Eigen::Matrix4f &transform) {
+  msg_.header.stamp = ros::Time::now();
+  msg_.header.seq++;
+
   msg_.pose.pose.position.x = transform(0, 3);
   msg_.pose.pose.position.y = transform(1, 3);
   msg_.pose.pose.position.z = transform(2, 3);
@@ -27,6 +30,5 @@ void OdometryPublisher::publish(const Eigen::Matrix4f &transform) {
   msg_.pose.pose.orientation.w = q.w();
 
   publisher_.publish(msg_);
-  msg_.header.seq++;
 }
 }  // namespace slam_for_autonomous_vehicle
