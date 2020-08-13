@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(slam_for_autonomous_vehicle)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
-add_definitions(-std=c++11)
+add_definitions(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -17,6 +17,10 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   tf
 )
+
+# find_package(PCL 1.11 REQUIRED common)
+# message(PCL_INCLUDE_DIRS: ${PCL_INCLUDE_DIRS})
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -125,6 +129,7 @@ message(PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR})
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  # ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -152,6 +157,7 @@ add_executable(slam_node
   src/front_end.cpp
   src/tf_listener.cpp
   src/publisher/odometry_publisher.cpp
+  src/publisher/cloud_publisher.cpp
 )
 target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc)
 # add_dependencies(slam_node styx_msgs_generate_messages_cpp)

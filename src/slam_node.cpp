@@ -1,4 +1,5 @@
 #include <nav_msgs/Odometry.h>
+#include <pcl/pcl_config.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <Eigen/Dense>
@@ -7,22 +8,25 @@
 #include "data_subscriber/gnss_subscriber.h"
 #include "data_subscriber/imu_subscriber.h"
 #include "front_end.h"
+#include "publisher/cloud_publisher.h"
 #include "publisher/odometry_publisher.h"
 #include "tf_listener.h"
 
-using slam_for_autonomous_vehicle::CloudSubscriber;
-using slam_for_autonomous_vehicle::GnssSubscriber;
-using slam_for_autonomous_vehicle::ImuSubscriber;
-using slam_for_autonomous_vehicle::Imu;
-using slam_for_autonomous_vehicle::Gnss;
 using slam_for_autonomous_vehicle::Cloud;
-using slam_for_autonomous_vehicle::TfListener;
+using slam_for_autonomous_vehicle::CloudPublisher;
+using slam_for_autonomous_vehicle::CloudSubscriber;
 using slam_for_autonomous_vehicle::FrontEnd;
+using slam_for_autonomous_vehicle::Gnss;
+using slam_for_autonomous_vehicle::GnssSubscriber;
+using slam_for_autonomous_vehicle::Imu;
+using slam_for_autonomous_vehicle::ImuSubscriber;
 using slam_for_autonomous_vehicle::OdometryPublisher;
-using std::string;
+using slam_for_autonomous_vehicle::TfListener;
 using std::deque;
+using std::string;
 
 int main(int argc, char *argv[]) {
+  std::cout << PCL_VERSION << std::endl;
   ros::init(argc, argv, "slam_node");
   ros::NodeHandle nh;
 
@@ -51,6 +55,7 @@ int main(int argc, char *argv[]) {
   }
 
   OdometryPublisher odom_pub(nh, "lidar_odom", map_frame, lidar_frame);
+  CloudPublisher cloud_pub(nh, "lidar_cloud", lidar_frame);
   CloudSubscriber cloud_sub(nh, 100);
   GnssSubscriber gnss_sub(nh, 100);
   ImuSubscriber imu_sub(nh, 100);
@@ -63,9 +68,13 @@ int main(int argc, char *argv[]) {
 
   ros::Rate rate(100);
   while (ros::ok()) {
+    // ROS_INFO("loop start");
     cloud_sub.get_data(cloud_data_buff);
+    // ROS_INFO("cloud_data_buff size: %d", cloud_data_buff.size());
     imu_sub.get_data(imu_data_buff);
+    // ROS_INFO("imu_data_buff size: %d", imu_data_buff.size());
     gnss_sub.get_data(gnss_data_buff);
+    // ROS_INFO("gnss_data_buff size: %d", gnss_data_buff.size());
     if (cloud_data_buff.size() > 0 && imu_data_buff.size() > 0 &&
         gnss_data_buff.size() > 0) {
       Cloud &cloud = cloud_data_buff.front();
@@ -95,10 +104,13 @@ int main(int argc, char *argv[]) {
           init_odometry = false;
           front_end.SetInitPose(odometry);
         }
+        // ROS_INFO_STREAM("odometry: " << odometry);
         FrontEnd::Frame curr_frame = front_end.Update(cloud);
+        // ROS_INFO("Update complete");
 
         // Publish result
-        odom_pub.publish(curr_frame.pose);
+        // odom_pub.publish(curr_frame.pose);
+        cloud_pub.publish(curr_frame.cloud);
 
         cloud_data_buff.pop_front();
         imu_data_buff.pop_front();
