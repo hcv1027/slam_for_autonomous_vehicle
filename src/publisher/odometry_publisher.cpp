@@ -6,7 +6,7 @@ OdometryPublisher::OdometryPublisher(ros::NodeHandle &nh,
                                      const std::string &topic_name,
                                      const std::string &base_frame,
                                      const std::string &child_frame) {
-  publisher_ = nh.advertise<nav_msgs::Odometry>("topic_name", 1000);
+  publisher_ = nh.advertise<nav_msgs::Odometry>(topic_name, 1000);
   // Initialize odometry message header
   msg_.header.seq = 0;
   msg_.header.stamp = ros::Time::now();

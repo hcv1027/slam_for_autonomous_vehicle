@@ -6,7 +6,7 @@ namespace slam_for_autonomous_vehicle {
 CloudPublisher::CloudPublisher(ros::NodeHandle &nh,
                                const std::string &topic_name,
                                const std::string &frame_id) {
-  publisher_ = nh.advertise<sensor_msgs::PointCloud2>("topic_name", 1000);
+  publisher_ = nh.advertise<sensor_msgs::PointCloud2>(topic_name, 1000);
 
   // Initialize cloud message header
   msg_.header.seq = 0;

@@ -32,18 +32,22 @@ FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
   std::vector<int> indices;
   Cloud no_nan_cloud;
   Cloud filteded_cloud;
-  pcl::removeNaNFromPointCloud(*cloud.cloud_ptr, *no_nan_cloud.cloud_ptr,
+  pcl::removeNaNFromPointCloud(*(cloud.cloud_ptr), *(no_nan_cloud.cloud_ptr),
                                indices);
   cloud_filter_.setInputCloud(no_nan_cloud.cloud_ptr);
-  cloud_filter_.filter(*filteded_cloud.cloud_ptr);
+  cloud_filter_.filter(*(filteded_cloud.cloud_ptr));
   ROS_INFO_STREAM("Filter input cloud: " << filteded_cloud.cloud_ptr->size());
+
+  // curr_frame_.cloud = filteded_cloud;
+  // curr_frame_.pose = Eigen::Matrix4f::Identity();
+  // return curr_frame_;
 
   // Add first key frame
   if (local_keyframe_.size() == 0) {
     /* Frame keyframe;
     keyframe.cloud = cloud;
     keyframe.pose = Eigen::Matrix4f::Identity(); */
-    curr_frame_.cloud = cloud;
+    curr_frame_.cloud = no_nan_cloud;
     curr_frame_.pose = Eigen::Matrix4f::Identity();
     AddKeyFrame(curr_frame_);
     return curr_frame_;
@@ -93,9 +97,9 @@ void FrontEnd::AddKeyFrame(Frame &keyframe) {
   local_map_.reset();
   for (Frame &keyframe : local_keyframe_) {
     Cloud transformed_cloud;
-    pcl::transformPointCloud(*keyframe.cloud.cloud_ptr,
-                             *transformed_cloud.cloud_ptr, keyframe.pose);
-    *local_map_.cloud_ptr += *transformed_cloud.cloud_ptr;
+    pcl::transformPointCloud(*(keyframe.cloud.cloud_ptr),
+                             *(transformed_cloud.cloud_ptr), keyframe.pose);
+    *(local_map_.cloud_ptr) += *(transformed_cloud.cloud_ptr);
   }
 
   // Setting point cloud to be aligned to.
@@ -106,6 +110,14 @@ void FrontEnd::AddKeyFrame(Frame &keyframe) {
                                  << ", filtered: "
                                  << filtered_local_map.cloud_ptr->size());
   ndt_.setInputTarget(filtered_local_map.cloud_ptr);
+
+  ROS_INFO("Test ndt");
+  // Cloud output_cloud;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(
+      new pcl::PointCloud<pcl::PointXYZ>);
+  ndt_.setInputSource(filtered_local_map.cloud_ptr);
+  ndt_.align(*output_cloud, predict_pose_);
+  ROS_INFO("Test ndt get final");
 
   // Update global keyfram and global map
   ROS_INFO("AddKeyFrame--");
