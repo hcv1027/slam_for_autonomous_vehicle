@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-# find_package(PCL 1.11 REQUIRED common)
+find_package(PCL REQUIRED)
 # message(PCL_INCLUDE_DIRS: ${PCL_INCLUDE_DIRS})
 
 
@@ -129,8 +129,11 @@ message(PROJECT_SOURCE_DIR: ${PROJECT_SOURCE_DIR})
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  # ${PCL_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
+
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -159,7 +162,7 @@ add_executable(slam_node
   src/publisher/odometry_publisher.cpp
   src/publisher/cloud_publisher.cpp
 )
-target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc)
+target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc ${PCL_LIBRARIES})
 # add_dependencies(slam_node styx_msgs_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
