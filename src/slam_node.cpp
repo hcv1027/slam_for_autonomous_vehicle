@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
   bool init_gnss = true;
   FrontEnd front_end(nh);
 
-  test_ndt();
+  // test_ndt();
 
   ros::Rate rate(100);
   while (ros::ok()) {
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
         // ROS_INFO("Update complete");
 
         // Publish result
-        // odom_pub.publish(curr_frame.pose);
+        odom_pub.publish(curr_frame.pose);
         cloud_pub.publish(curr_frame.cloud);
 
         cloud_data_buff.pop_front();

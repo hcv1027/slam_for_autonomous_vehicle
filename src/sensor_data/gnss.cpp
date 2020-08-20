@@ -25,4 +25,4 @@ Gnss::Gnss(const Gnss& gnss) {
   latitude = gnss.latitude;
   altitude = gnss.altitude;
 }
-}
+}  // namespace slam_for_autonomous_vehicle

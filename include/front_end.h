@@ -1,6 +1,7 @@
 #ifndef SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_
 #define SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_
 
+#include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/registration/ndt.h>
 #include <Eigen/Dense>
@@ -30,7 +31,9 @@ class FrontEnd {
 
  private:
   ros::NodeHandle nh_;
-  pcl::VoxelGrid<pcl::PointXYZ> cloud_filter_;
+  // pcl::VoxelGrid<pcl::PointXYZ> cloud_filter_;
+  pcl::ApproximateVoxelGrid<pcl::PointXYZ> cloud_filter_;
+  pcl::ApproximateVoxelGrid<pcl::PointXYZ> local_map_filter_;
   pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_;
 
   Eigen::Matrix4f init_pose_;

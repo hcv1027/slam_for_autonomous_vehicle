@@ -9,8 +9,9 @@ using std::string;
 
 namespace slam_for_autonomous_vehicle {
 FrontEnd::FrontEnd(ros::NodeHandle &nh) : nh_(nh) {
-  float leaf_size = nh_.param(string("leaf_size"), 1.2);
+  float leaf_size = nh_.param(string("leaf_size"), 0.5);
   cloud_filter_.setLeafSize(leaf_size, leaf_size, leaf_size);  // Unit: meter
+  local_map_filter_.setLeafSize(2.0, 2.0, 2.0);                // Unit: meter
 
   // curr_pose_ = Eigen::Matrix4f::Identity();
   last_pose_ = Eigen::Matrix4f::Identity();
@@ -25,7 +26,7 @@ FrontEnd::FrontEnd(ros::NodeHandle &nh) : nh_(nh) {
   // Setting Resolution of NDT grid structure (VoxelGridCovariance).
   ndt_.setResolution(1.0);
   // Setting max number of registration iterations.
-  ndt_.setMaximumIterations(30);
+  ndt_.setMaximumIterations(35);
 }
 
 FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
@@ -37,10 +38,6 @@ FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
   cloud_filter_.setInputCloud(no_nan_cloud.cloud_ptr);
   cloud_filter_.filter(*(filteded_cloud.cloud_ptr));
   ROS_INFO_STREAM("Filter input cloud: " << filteded_cloud.cloud_ptr->size());
-
-  // curr_frame_.cloud = filteded_cloud;
-  // curr_frame_.pose = Eigen::Matrix4f::Identity();
-  // return curr_frame_;
 
   // Add first key frame
   if (local_keyframe_.size() == 0) {
@@ -55,22 +52,25 @@ FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
 
   // Setting point cloud to be aligned.
   Cloud output_cloud;
-  ROS_INFO("Start ndt");
+  // ROS_INFO("Start ndt");
   ndt_.setInputSource(filteded_cloud.cloud_ptr);
-  ROS_INFO_STREAM("ndt align: " << output_cloud.cloud_ptr->size());
   ndt_.align(*output_cloud.cloud_ptr, predict_pose_);
-  ROS_INFO("ndt get final");
-  auto temp_pose = ndt_.getFinalTransformation();
-  ROS_INFO_STREAM("temp_pose: " << temp_pose);
-  curr_frame_.pose = temp_pose;
-  // curr_frame_.pose = ndt_.getFinalTransformation();
-  ROS_INFO("After ndt");
+  // ROS_INFO("ndt get final");
+  // auto temp_pose = ndt_.getFinalTransformation();
+  // ROS_INFO_STREAM("temp_pose: " << temp_pose);
+  // curr_frame_.pose = temp_pose;]
+  ROS_INFO_STREAM("ndt align: " << output_cloud.cloud_ptr->size());
+  // curr_frame_.cloud = filteded_cloud;
+  curr_frame_.cloud = output_cloud;
+  curr_frame_.pose = ndt_.getFinalTransformation();
+  ROS_INFO_STREAM("cloud_pose: " << curr_frame_.pose);
+  // ROS_INFO("After ndt");
 
   // Prdtict next pose formula: next_pose = curr_pose * step_pose
   Eigen::Matrix4f step_pose = last_pose_.inverse() * curr_frame_.pose;
   predict_pose_ = curr_frame_.pose * step_pose;
   last_pose_ = curr_frame_.pose;
-  ROS_INFO("After predict");
+  // ROS_INFO("After predict");
 
   // Add new keyframe
   Frame &last_keyframe = local_keyframe_.back();
@@ -88,7 +88,7 @@ FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
 }
 
 void FrontEnd::AddKeyFrame(Frame &keyframe) {
-  ROS_INFO("AddKeyFrame++");
+  // ROS_INFO("AddKeyFrame++");
   // Update local keyframe and local map
   local_keyframe_.push_back(keyframe);
   if (local_keyframe_.size() > 20) {
@@ -104,26 +104,19 @@ void FrontEnd::AddKeyFrame(Frame &keyframe) {
 
   // Setting point cloud to be aligned to.
   Cloud filtered_local_map;
-  cloud_filter_.setInputCloud(local_map_.cloud_ptr);
-  cloud_filter_.filter(*filtered_local_map.cloud_ptr);
-  ROS_INFO_STREAM("local_map_: " << local_map_.cloud_ptr->size()
-                                 << ", filtered: "
-                                 << filtered_local_map.cloud_ptr->size());
+  local_map_filter_.setInputCloud(local_map_.cloud_ptr);
+  local_map_filter_.filter(*filtered_local_map.cloud_ptr);
+  // ROS_INFO_STREAM("local_map_: " << local_map_.cloud_ptr->size()
+  //                                << ", filtered: "
+  //                                << filtered_local_map.cloud_ptr->size());
   ndt_.setInputTarget(filtered_local_map.cloud_ptr);
 
-  ROS_INFO("Test ndt");
-  // Cloud output_cloud;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud(
-      new pcl::PointCloud<pcl::PointXYZ>);
-  ndt_.setInputSource(filtered_local_map.cloud_ptr);
-  ndt_.align(*output_cloud, predict_pose_);
-  ROS_INFO("Test ndt get final");
-
   // Update global keyfram and global map
-  ROS_INFO("AddKeyFrame--");
+  // ROS_INFO("AddKeyFrame--");
 }
 
 void FrontEnd::SetInitPose(const Eigen::Matrix4f &init_pose) {
+  ROS_INFO_STREAM("SetInitPose: " << init_pose);
   init_pose_ = init_pose;
   curr_frame_.pose = init_pose;
   last_pose_ = init_pose;
