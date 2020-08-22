@@ -162,6 +162,8 @@ add_executable(slam_node
   src/publisher/odometry_publisher.cpp
   src/publisher/cloud_publisher.cpp
   src/models/registration/ndt_registration.cpp
+  src/models/voxel_filter/voxel_filter.cpp
+  src/models/voxel_filter/approximate_voxel_filter.cpp
 )
 target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc ${PCL_LIBRARIES})
 # add_dependencies(slam_node styx_msgs_generate_messages_cpp)

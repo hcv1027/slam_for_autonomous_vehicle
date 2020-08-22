@@ -3,6 +3,7 @@
 #include <ros/console.h>
 #include <cmath>
 #include "models/registration/ndt_registration.h"
+#include "models/voxel_filter/approximate_voxel_filter.h"
 
 using std::pow;
 using std::sqrt;
@@ -10,27 +11,27 @@ using std::string;
 
 namespace slam_for_autonomous_vehicle {
 FrontEnd::FrontEnd(ros::NodeHandle &nh) : nh_(nh) {
-  float leaf_size = nh_.param(string("leaf_size"), 0.5);
-  cloud_filter_.setLeafSize(leaf_size, leaf_size, leaf_size);  // Unit: meter
-  local_map_filter_.setLeafSize(2.0, 2.0, 2.0);                // Unit: meter
+  float leaf_size = nh_.param(string("cloud_filter_leaf_size"), 0.5);
+  cloud_filter_ptr_ = std::make_shared<ApproximateVoxelFilter>(leaf_size);
 
-  // curr_pose_ = Eigen::Matrix4f::Identity();
+  leaf_size = nh_.param(string("local_map_filter_leaf_size"), 2.0);
+  local_map_filter_ptr_ = std::make_shared<ApproximateVoxelFilter>(leaf_size);
+
   last_pose_ = Eigen::Matrix4f::Identity();
   predict_pose_ = Eigen::Matrix4f::Identity();
 
-  // Initialize ndt
+  // Initialize ndt registration
   registration_ptr_ = std::make_shared<NdtRegistration>();
 }
 
 FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
   std::vector<int> indices;
   Cloud no_nan_cloud;
-  Cloud filteded_cloud;
+  Cloud filtered_cloud;
   pcl::removeNaNFromPointCloud(*(cloud.cloud_ptr), *(no_nan_cloud.cloud_ptr),
                                indices);
-  cloud_filter_.setInputCloud(no_nan_cloud.cloud_ptr);
-  cloud_filter_.filter(*(filteded_cloud.cloud_ptr));
-  ROS_INFO_STREAM("Filter input cloud: " << filteded_cloud.cloud_ptr->size());
+  cloud_filter_ptr_->Filter(no_nan_cloud, filtered_cloud);
+  ROS_INFO_STREAM("Filter input cloud: " << filtered_cloud.cloud_ptr->size());
 
   // Add first key frame
   if (local_keyframe_.size() == 0) {
@@ -43,13 +44,13 @@ FrontEnd::Frame FrontEnd::Update(const Cloud &cloud) {
   // Scan match
   Cloud output_cloud;
   Eigen::Matrix4f output_pose = Eigen::Matrix4f::Identity();
-  registration_ptr_->ScanMatch(filteded_cloud, predict_pose_, output_cloud,
+  registration_ptr_->ScanMatch(filtered_cloud, predict_pose_, output_cloud,
                                output_pose);
   curr_frame_.cloud = output_cloud;
   curr_frame_.pose = output_pose;
   // ROS_INFO_STREAM("cloud_pose: " << curr_frame_.pose);
 
-  // Prdtict next pose formula: next_pose = curr_pose * step_pose
+  // Predict next pose formula: next_pose = curr_pose * step_pose
   Eigen::Matrix4f step_pose = last_pose_.inverse() * curr_frame_.pose;
   predict_pose_ = curr_frame_.pose * step_pose;
   last_pose_ = curr_frame_.pose;
@@ -86,8 +87,7 @@ void FrontEnd::AddKeyFrame(Frame &keyframe) {
 
   // Setting point cloud to be aligned to.
   Cloud filtered_local_map;
-  local_map_filter_.setInputCloud(local_map_.cloud_ptr);
-  local_map_filter_.filter(*filtered_local_map.cloud_ptr);
+  local_map_filter_ptr_->Filter(local_map_, filtered_local_map);
   // ROS_INFO_STREAM("local_map_: " << local_map_.cloud_ptr->size()
   //                                << ", filtered: "
   //                                << filtered_local_map.cloud_ptr->size());

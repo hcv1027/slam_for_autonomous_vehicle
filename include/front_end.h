@@ -1,12 +1,11 @@
 #ifndef SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_
 #define SLAM_FOR_AUTONOMOUS_VEHICLE_FRONT_END_H_
 
-#include <pcl/filters/approximate_voxel_grid.h>
-#include <pcl/filters/voxel_grid.h>
 #include <Eigen/Dense>
 #include <deque>
 #include <memory>
 #include "models/registration/registration_interface.h"
+#include "models/voxel_filter/voxel_filter_interface.h"
 #include "sensor_data/cloud.h"
 
 namespace slam_for_autonomous_vehicle {
@@ -25,16 +24,14 @@ class FrontEnd {
   FrontEnd::Frame Update(const Cloud &cloud);
 
   void SetInitPose(const Eigen::Matrix4f &init_pose);
-  // Eigen::Matrix4f GetCurrFrame() { return curr_pose_; }
 
  private:
   void AddKeyFrame(Frame &keyframe);
 
  private:
   ros::NodeHandle nh_;
-  // pcl::VoxelGrid<pcl::PointXYZ> cloud_filter_;
-  pcl::ApproximateVoxelGrid<pcl::PointXYZ> cloud_filter_;
-  pcl::ApproximateVoxelGrid<pcl::PointXYZ> local_map_filter_;
+  std::shared_ptr<VoxelFilterInterface> cloud_filter_ptr_;
+  std::shared_ptr<VoxelFilterInterface> local_map_filter_ptr_;
   std::shared_ptr<RegistrationInterface> registration_ptr_;
 
   Eigen::Matrix4f init_pose_;
