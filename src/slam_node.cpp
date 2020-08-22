@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
         gnss_data_buff.pop_front();
       } else {
         // Initialize GeographicLib::LocalCartesian
-        if (!init_gnss) {
+        if (init_gnss) {
           init_gnss = false;
           gnss.InitOrigin();
         }
