@@ -161,6 +161,7 @@ add_executable(slam_node
   src/tf_listener.cpp
   src/publisher/odometry_publisher.cpp
   src/publisher/cloud_publisher.cpp
+  src/models/registration/ndt_registration.cpp
 )
 target_link_libraries(slam_node ${catkin_LIBRARIES} libGeographiccc ${PCL_LIBRARIES})
 # add_dependencies(slam_node styx_msgs_generate_messages_cpp)

@@ -3,9 +3,10 @@
 
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/filters/voxel_grid.h>
-#include <pcl/registration/ndt.h>
 #include <Eigen/Dense>
 #include <deque>
+#include <memory>
+#include "models/registration/registration_interface.h"
 #include "sensor_data/cloud.h"
 
 namespace slam_for_autonomous_vehicle {
@@ -34,7 +35,7 @@ class FrontEnd {
   // pcl::VoxelGrid<pcl::PointXYZ> cloud_filter_;
   pcl::ApproximateVoxelGrid<pcl::PointXYZ> cloud_filter_;
   pcl::ApproximateVoxelGrid<pcl::PointXYZ> local_map_filter_;
-  pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ> ndt_;
+  std::shared_ptr<RegistrationInterface> registration_ptr_;
 
   Eigen::Matrix4f init_pose_;
   Eigen::Matrix4f last_pose_;
